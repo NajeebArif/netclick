@@ -2,11 +2,10 @@ package narif.poc.netclick.controller;
 
 import narif.poc.netclick.model.FilmDto;
 import narif.poc.netclick.service.FilmService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("films")
@@ -19,7 +18,9 @@ public class FilmController {
     }
 
     @GetMapping
-    public List<FilmDto> fetchAllFilms(){
-        return filmService.fetchAllFilms();
+    public Page<FilmDto> fetchAllFilms(@RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "20") int size){
+        final var of = PageRequest.of(page, size, Sort.by("filmId").ascending());
+        return filmService.fetchAllFilms(of);
     }
 }

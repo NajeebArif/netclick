@@ -4,13 +4,12 @@ import narif.poc.netclick.model.FilmDto;
 import narif.poc.netclick.model.entity.Film;
 import narif.poc.netclick.repository.FilmRepository;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class FilmService {
@@ -21,9 +20,9 @@ public class FilmService {
         this.filmRepository = filmRepository;
     }
 
-    public List<FilmDto> fetchAllFilms(){
-        final var all = filmRepository.findAll();
-        return all.stream().map(filmToFilmDtoMapper()).collect(Collectors.toList());
+    public Page<FilmDto> fetchAllFilms(PageRequest pageRequest){
+        return filmRepository.findAll(pageRequest)
+                .map(filmToFilmDtoMapper());
     }
 
     private static Function<Film, FilmDto> filmToFilmDtoMapper() {
