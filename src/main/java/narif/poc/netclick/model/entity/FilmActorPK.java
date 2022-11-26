@@ -1,25 +1,31 @@
-package narif.poc.netclick.entity;
+package narif.poc.netclick.model.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import java.io.Serializable;
 
 /**
- * The primary key class for the film_category database table.
+ * The primary key class for the film_actor database table.
  * 
  */
 @Embeddable
-public class FilmCategoryPK implements Serializable {
+public class FilmActorPK implements Serializable {
 	//default serial version id, required for serializable classes.
 	private static final long serialVersionUID = 1L;
+
+	@Column(name="actor_id", insertable=false, updatable=false)
+	private Integer actorId;
 
 	@Column(name="film_id", insertable=false, updatable=false)
 	private Integer filmId;
 
-	@Column(name="category_id", insertable=false, updatable=false)
-	private Integer categoryId;
-
-	public FilmCategoryPK() {
+	public FilmActorPK() {
+	}
+	public Integer getActorId() {
+		return this.actorId;
+	}
+	public void setActorId(Integer actorId) {
+		this.actorId = actorId;
 	}
 	public Integer getFilmId() {
 		return this.filmId;
@@ -27,31 +33,25 @@ public class FilmCategoryPK implements Serializable {
 	public void setFilmId(Integer filmId) {
 		this.filmId = filmId;
 	}
-	public Integer getCategoryId() {
-		return this.categoryId;
-	}
-	public void setCategoryId(Integer categoryId) {
-		this.categoryId = categoryId;
-	}
 
 	public boolean equals(Object other) {
 		if (this == other) {
 			return true;
 		}
-		if (!(other instanceof FilmCategoryPK)) {
+		if (!(other instanceof FilmActorPK)) {
 			return false;
 		}
-		FilmCategoryPK castOther = (FilmCategoryPK)other;
+		FilmActorPK castOther = (FilmActorPK)other;
 		return 
-			this.filmId.equals(castOther.filmId)
-			&& this.categoryId.equals(castOther.categoryId);
+			this.actorId.equals(castOther.actorId)
+			&& this.filmId.equals(castOther.filmId);
 	}
 
 	public int hashCode() {
 		final int prime = 31;
 		int hash = 17;
+		hash = hash * prime + this.actorId.hashCode();
 		hash = hash * prime + this.filmId.hashCode();
-		hash = hash * prime + this.categoryId.hashCode();
 		
 		return hash;
 	}

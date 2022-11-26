@@ -1,4 +1,4 @@
-package narif.poc.netclick.entity;
+package narif.poc.netclick.model.entity;
 
 import javax.persistence.*;
 import java.io.Serializable;
