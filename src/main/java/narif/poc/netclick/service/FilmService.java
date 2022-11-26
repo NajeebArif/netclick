@@ -1,12 +1,12 @@
 package narif.poc.netclick.service;
 
 import narif.poc.netclick.model.FilmDto;
+import narif.poc.netclick.model.FilmSearchQueryDto;
 import narif.poc.netclick.model.entity.Film;
 import narif.poc.netclick.repository.FilmRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Function;
@@ -22,6 +22,11 @@ public class FilmService {
 
     public Page<FilmDto> fetchAllFilms(PageRequest pageRequest){
         return filmRepository.findAll(pageRequest)
+                .map(filmToFilmDtoMapper());
+    }
+
+    public Page<FilmDto> searchMovies(FilmSearchQueryDto filmSearchQueryDto, PageRequest of) {
+        return filmRepository.findAllFilmsForActor(filmSearchQueryDto.getActor(), of)
                 .map(filmToFilmDtoMapper());
     }
 
