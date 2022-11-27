@@ -7,8 +7,10 @@ import narif.poc.netclick.repository.FilmRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.function.Function;
 
 @Service
@@ -28,6 +30,10 @@ public class FilmService {
     public Page<FilmDto> searchMovies(FilmSearchQueryDto filmSearchQueryDto, PageRequest of) {
         return filmRepository.findAllFilmsForActor(filmSearchQueryDto.getActor(), of)
                 .map(filmToFilmDtoMapper());
+    }
+
+    public Page<FilmDto> searchMoviesByGenre(List<String> genres, Pageable pageable){
+        return filmRepository.searchMovies(genres, pageable).map(filmToFilmDtoMapper());
     }
 
     private static Function<Film, FilmDto> filmToFilmDtoMapper() {
