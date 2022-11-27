@@ -3,6 +3,7 @@ package narif.poc.netclick.model.entity;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -16,7 +17,8 @@ public class Rental implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator = "rental_rental_id_seq_gen")
+	@SequenceGenerator(name = "rental_rental_id_seq_gen", sequenceName = "rental_rental_id_seq",allocationSize = 1)
 	@Column(name="rental_id")
 	private Integer rentalId;
 
@@ -31,7 +33,7 @@ public class Rental implements Serializable {
 
 	//bi-directional many-to-one association to Payment
 	@OneToMany(mappedBy="rental")
-	private List<Payment> payments;
+	private List<Payment> payments = new ArrayList<>();
 
 	//bi-directional many-to-one association to Customer
 	@ManyToOne
@@ -94,14 +96,12 @@ public class Rental implements Serializable {
 	public Payment addPayment(Payment payment) {
 		getPayments().add(payment);
 		payment.setRental(this);
-
 		return payment;
 	}
 
 	public Payment removePayment(Payment payment) {
 		getPayments().remove(payment);
 		payment.setRental(null);
-
 		return payment;
 	}
 
@@ -129,4 +129,17 @@ public class Rental implements Serializable {
 		this.staff = staff;
 	}
 
+	@Override
+	public String toString() {
+		return "Rental{" +
+				"rentalId=" + rentalId +
+				", lastUpdate=" + lastUpdate +
+				", rentalDate=" + rentalDate +
+				", returnDate=" + returnDate +
+				", payments=" + payments +
+				", customer=" + customer +
+				", inventory=" + inventory +
+				", staff=" + staff +
+				'}';
+	}
 }

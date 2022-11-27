@@ -30,4 +30,6 @@ public interface FilmRepository extends JpaRepository<Film, Integer> {
 
     @Query("select f from Film f join f.filmCategories fc where fc.category.name in (:genres)")
     Page<Film> findAllForGenres(List<String> genres, Pageable pageable);
+
+    List<Film> findAllByFilmIdIn(List<Integer> filmIds);
 }

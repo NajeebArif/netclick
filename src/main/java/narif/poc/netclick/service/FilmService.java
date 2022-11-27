@@ -46,6 +46,10 @@ public class FilmService {
             throw new RuntimeException("invalid request");
     }
 
+    public List<Film> findAllByIds(List<Integer> filmIds){
+        return filmRepository.findAllById(filmIds);
+    }
+
     private static boolean isValidActorsName(FilmSearchQueryDto filmSearchQueryDto) {
         return filmSearchQueryDto.getActor() != null && !filmSearchQueryDto.getActor().isEmpty();
     }

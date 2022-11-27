@@ -43,11 +43,11 @@ public class Staff implements Serializable {
 	private String username;
 
 	//bi-directional many-to-one association to Payment
-	@OneToMany(mappedBy="staff")
+	@OneToMany(mappedBy="staff", fetch = FetchType.LAZY)
 	private List<Payment> payments;
 
 	//bi-directional many-to-one association to Rental
-	@OneToMany(mappedBy="staff")
+	@OneToMany(mappedBy="staff", fetch = FetchType.LAZY)
 	private List<Rental> rentals;
 
 	//bi-directional many-to-one association to Address

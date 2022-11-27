@@ -16,7 +16,8 @@ public class Payment implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator = "payment_payment_id_seq_gen")
+	@SequenceGenerator(name = "payment_payment_id_seq_gen", sequenceName = "payment_payment_id_seq", allocationSize = 1)
 	@Column(name="payment_id")
 	private Integer paymentId;
 
@@ -91,4 +92,11 @@ public class Payment implements Serializable {
 		this.staff = staff;
 	}
 
+	@Override
+	public String toString() {
+		return "Payment{" +
+				"paymentId=" + paymentId +
+				", amount=" + amount +
+				'}';
+	}
 }

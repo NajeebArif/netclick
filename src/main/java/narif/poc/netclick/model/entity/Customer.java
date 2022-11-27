@@ -183,4 +183,13 @@ public class Customer implements Serializable {
 		return rental;
 	}
 
+	@Override
+	public String toString() {
+		return "Customer{" +
+				"customerId=" + customerId +
+				", email='" + email + '\'' +
+				", firstName='" + firstName + '\'' +
+				", lastName='" + lastName + '\'' +
+				'}';
+	}
 }
