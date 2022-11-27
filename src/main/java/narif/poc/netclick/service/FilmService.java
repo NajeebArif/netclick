@@ -34,13 +34,13 @@ public class FilmService {
 
     public Page<FilmDto> searchMovies(FilmSearchQueryDto filmSearchQueryDto, PageRequest of) {
         if (isValidTitle(filmSearchQueryDto) && isValidActorsName(filmSearchQueryDto))
-            return filmRepository.searchMovies(filmSearchQueryDto.getTitle(), filmSearchQueryDto.getActor(), of)
+            return filmRepository.searchMovies(filmSearchQueryDto.getTitle().toLowerCase(), filmSearchQueryDto.getActor().toLowerCase(), of)
                     .map(filmToFilmDtoMapper());
         else if (isValidTitle(filmSearchQueryDto)) {
-            return filmRepository.searchMoviesForTitle(filmSearchQueryDto.getTitle(), of)
+            return filmRepository.searchMoviesForTitle(filmSearchQueryDto.getTitle().toLowerCase(), of)
                     .map(filmToFilmDtoMapper());
         } else if (isValidActorsName(filmSearchQueryDto)) {
-            return filmRepository.searchMoviesForTitle(filmSearchQueryDto.getActor(), of)
+            return filmRepository.searchMoviesForTitle(filmSearchQueryDto.getActor().toLowerCase(), of)
                     .map(filmToFilmDtoMapper());
         } else
             throw new RuntimeException("invalid request");
