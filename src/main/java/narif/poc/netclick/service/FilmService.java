@@ -22,18 +22,40 @@ public class FilmService {
         this.filmRepository = filmRepository;
     }
 
-    public Page<FilmDto> fetchAllFilms(PageRequest pageRequest){
+    public Page<FilmDto> fetchAllFilms(PageRequest pageRequest) {
         return filmRepository.findAll(pageRequest)
                 .map(filmToFilmDtoMapper());
     }
 
-    public Page<FilmDto> searchMovies(FilmSearchQueryDto filmSearchQueryDto, PageRequest of) {
+    public Page<FilmDto> findMoviesForActorFirstName(FilmSearchQueryDto filmSearchQueryDto, PageRequest of) {
         return filmRepository.findAllFilmsForActor(filmSearchQueryDto.getActor(), of)
                 .map(filmToFilmDtoMapper());
     }
 
-    public Page<FilmDto> searchMoviesByGenre(List<String> genres, Pageable pageable){
-        return filmRepository.searchMovies(genres, pageable).map(filmToFilmDtoMapper());
+    public Page<FilmDto> searchMovies(FilmSearchQueryDto filmSearchQueryDto, PageRequest of) {
+        if (isValidTitle(filmSearchQueryDto) && isValidActorsName(filmSearchQueryDto))
+            return filmRepository.searchMovies(filmSearchQueryDto.getTitle(), filmSearchQueryDto.getActor(), of)
+                    .map(filmToFilmDtoMapper());
+        else if (isValidTitle(filmSearchQueryDto)) {
+            return filmRepository.searchMoviesForTitle(filmSearchQueryDto.getTitle(), of)
+                    .map(filmToFilmDtoMapper());
+        } else if (isValidActorsName(filmSearchQueryDto)) {
+            return filmRepository.searchMoviesForTitle(filmSearchQueryDto.getActor(), of)
+                    .map(filmToFilmDtoMapper());
+        } else
+            throw new RuntimeException("invalid request");
+    }
+
+    private static boolean isValidActorsName(FilmSearchQueryDto filmSearchQueryDto) {
+        return filmSearchQueryDto.getActor() != null && !filmSearchQueryDto.getActor().isEmpty();
+    }
+
+    private static boolean isValidTitle(FilmSearchQueryDto filmSearchQueryDto) {
+        return filmSearchQueryDto.getTitle() != null && !filmSearchQueryDto.getTitle().isEmpty();
+    }
+
+    public Page<FilmDto> searchMoviesByGenre(List<String> genres, Pageable pageable) {
+        return filmRepository.findAllForGenres(genres, pageable).map(filmToFilmDtoMapper());
     }
 
     private static Function<Film, FilmDto> filmToFilmDtoMapper() {
