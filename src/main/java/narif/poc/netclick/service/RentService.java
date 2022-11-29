@@ -1,5 +1,6 @@
 package narif.poc.netclick.service;
 
+import narif.poc.netclick.client.DeliveryClient;
 import narif.poc.netclick.model.RentMovieDto;
 import narif.poc.netclick.model.entity.*;
 import narif.poc.netclick.repository.CustomerRepository;
@@ -7,6 +8,7 @@ import narif.poc.netclick.repository.PaymentRepository;
 import narif.poc.netclick.repository.RentalRepository;
 import narif.poc.netclick.repository.StaffRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -25,15 +27,18 @@ public class RentService {
     private final RentalRepository rentalRepository;
     private final StaffRepository staffRepository;
     private final PaymentRepository paymentRepository;
+    private final DeliveryClient deliveryClient;
 
-    public RentService(FilmService filmService, CustomerRepository customerRepository, RentalRepository rentalRepository, StaffRepository staffRepository, PaymentRepository paymentRepository) {
+    public RentService(FilmService filmService, CustomerRepository customerRepository, RentalRepository rentalRepository, StaffRepository staffRepository, PaymentRepository paymentRepository, DeliveryClient deliveryClient) {
         this.filmService = filmService;
         this.customerRepository = customerRepository;
         this.rentalRepository = rentalRepository;
         this.staffRepository = staffRepository;
         this.paymentRepository = paymentRepository;
+        this.deliveryClient = deliveryClient;
     }
 
+    @Transactional
     public List<Integer> rentFilm(RentMovieDto rentMovieDto) {
         final var filmList = filmService.findAllByIds(rentMovieDto.getFilmIds());
         final var totalCost = calculateTotalCostOfRent(rentMovieDto, filmList).orElseThrow(RuntimeException::new);
@@ -48,6 +53,7 @@ public class RentService {
         final var save = paymentRepository.save(payment);
         if(save.getPaymentId()==null)
             throw new RuntimeException("Payment Failed!");
+        deliveryClient.deliverRentedFilms(rentalIds);
         return rentalIds;
     }
 
