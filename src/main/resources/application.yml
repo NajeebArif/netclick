@@ -3,11 +3,9 @@ logging.level:
     SQL: DEBUG
     type.descriptor.sql.BasicBinder: TRACE
 spring:
+  main:
+    web-application-type: reactive
   jpa:
-#    show-sql: true
-#    properties:
-#      hibernate:
-#        format_sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   datasource:
     url: "jdbc:postgresql://localhost:5432/dvdrental"
