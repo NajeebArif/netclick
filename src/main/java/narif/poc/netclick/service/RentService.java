@@ -45,46 +45,48 @@ public class RentService {
         this.deliveryClient = deliveryClient;
     }
 
-    public Flux<Integer> rentFilmReactive(RentMovieDto rentMovieDtoMono){
-        return Mono.fromCallable(()->rentFilm(rentMovieDtoMono))
-                .subscribeOn(Schedulers.boundedElastic())
-                .flatMapMany(Flux::fromIterable);
+    public Flux<Integer> rentFilm(RentMovieDto rentMovieDto) {
+        final var filmList = Mono.fromCallable(()->filmService.findAllByIds(rentMovieDto.getFilmIds()))
+                .flatMapMany(Flux::fromIterable)
+                .subscribeOn(Schedulers.boundedElastic());
+        final var totalCost = calculateTotalCostOfRent(rentMovieDto, filmList);
+        final var customer = Mono.fromCallable(()->customerRepository.findByEmail(rentMovieDto.getCustomerEmail()).orElseThrow(RuntimeException::new));
+        final var staff = Mono.fromCallable(()->staffRepository.findById(1).orElseThrow(RuntimeException::new));
+        final var payment = getPaymentMono(totalCost, customer, staff)
+                .subscribeOn(Schedulers.boundedElastic());
+        final var rentals = filmList
+                .flatMap(f->Mono.zip(customer, payment, staff)
+                                .map(tup3->filmToRental(f, rentMovieDto, tup3.getT1(), tup3.getT2(), tup3.getT3()))
+                        )
+                .subscribeOn(Schedulers.boundedElastic());
+        return Flux.zip(rentals.collectList(), payment)
+                .flatMapIterable(tuple-> processRentals(tuple.getT1(), tuple.getT2()));
     }
 
-    @Transactional
-    public List<Integer> rentFilm(RentMovieDto rentMovieDto) {
-        log.info("Renting film ids: "+rentMovieDto.getFilmIds());
-        final var filmList = filmService.findAllByIds(rentMovieDto.getFilmIds());
-        log.info("Films to be rented: "+filmList);
-        final var totalCost = calculateTotalCostOfRent(rentMovieDto, filmList).orElseThrow(RuntimeException::new);
-        log.info("Total cost of rent: "+totalCost);
-        final var customer = customerRepository.findByEmail(rentMovieDto.getCustomerEmail()).orElseThrow(RuntimeException::new);
-        log.info("Customer name: "+customer.getFirstName()+" "+customer.getLastName());
-        final var staff = staffRepository.findById(1).orElseThrow(RuntimeException::new);
-        log.info("Staff name: "+staff.getFirstName()+" "+staff.getLastName());
-        final Payment payment = getPayment(totalCost, customer, staff);
-        final var rentals = filmList.stream().map(getFilmRentalFunction(rentMovieDto, customer, payment, staff)).collect(Collectors.toList());
+    private List<Integer> processRentals(List<Rental> rentals, Payment payment){
         for (Rental ren : rentals) {
             payment.setRental(ren);
         }
-        final var rentalIds = rentalRepository.saveAll(rentals).stream().map(Rental::getRentalId).collect(Collectors.toList());
+        final var rentalIds = rentalRepository.saveAll(rentals)
+                .stream().map(Rental::getRentalId)
+                .collect(Collectors.toList());
         log.info("Rental ids created: "+rentalIds);
+        final var deliverRentedFilms = deliveryClient.deliverRentedFilmsReactive(Flux.fromIterable(rentalIds));
+        deliverRentedFilms.subscribe(s -> log.info("Delivery Service response: "+s));
         final var save = paymentRepository.save(payment);
         if(save.getPaymentId()==null)
             throw new RuntimeException("Payment Failed!");
         log.info("Payment ID: "+save.getPaymentId());
-        final var deliverRentedFilms = deliveryClient.deliverRentedFilmsReactive(Flux.fromIterable(rentalIds));
-//        Don't do this. you will get an error because of the explicit call to block()
-//        log.info("Delivery Service response: "+deliverRentedFilms.block());
-//        If you really want to block you can delegate it to a different thread.
-//        new Thread(()->log.info("Delivery Service response: "+deliverRentedFilms.block())).start();
-        deliverRentedFilms.subscribe(s -> log.info("Delivery Service response: "+s));
         return rentalIds;
     }
 
-    private static Optional<BigDecimal> calculateTotalCostOfRent(RentMovieDto rentMovieDto, List<Film> filmList) {
-        return filmList.stream().map(film -> film.getRentalRate().multiply(BigDecimal.valueOf(rentMovieDto.getNumberOfDays())))
+    private static Mono<BigDecimal> calculateTotalCostOfRent(RentMovieDto rentMovieDto, Flux<Film> filmList) {
+        return filmList.map(film -> film.getRentalRate().multiply(BigDecimal.valueOf(rentMovieDto.getNumberOfDays())))
                 .reduce((bigDecimal, bigDecimal2) -> bigDecimal2.add(bigDecimal));
+    }
+
+    private static Mono<Payment> getPaymentMono(Mono<BigDecimal> totalCost, Mono<Customer> byEmail, Mono<Staff> byId) {
+        return Mono.zip(totalCost, byEmail, byId).map(t3-> getPayment(t3.getT1(), t3.getT2(), t3.getT3()));
     }
 
     private static Payment getPayment(BigDecimal totalCost, Customer byEmail, Staff byId) {
@@ -108,6 +110,18 @@ public class RentService {
             rental.setStaff(byId);
             return rental;
         };
+    }
+
+    private static Rental filmToRental(Film film, RentMovieDto rentMovieDto, Customer byEmail, Payment payment, Staff byId) {
+        final var rental = new Rental();
+        rental.addPayment(payment);
+        rental.setInventory(film.getInventories().get(0));
+        rental.setCustomer(byEmail);
+        rental.setRentalDate(currentTimestamp());
+        rental.setLastUpdate(currentTimestamp());
+        rental.setReturnDate(new Timestamp(Instant.now().plus(rentMovieDto.getNumberOfDays(), ChronoUnit.DAYS).toEpochMilli()));
+        rental.setStaff(byId);
+        return rental;
     }
 
     private static Timestamp currentTimestamp() {

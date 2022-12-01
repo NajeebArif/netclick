@@ -12,6 +12,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.Duration;
 import java.util.List;
 
 @RestController
@@ -30,7 +31,7 @@ public class RentController {
     public Flux<Integer> rentMovies(@RequestBody Mono<RentMovieDto> rentMovieDto){
         log.info("RentController invoked.");
         return rentMovieDto
-                .flatMapMany(rentService::rentFilmReactive)
+                .flatMapMany(rentService::rentFilm)
                 .log("REST CALL MADE.")
                 .subscribeOn(Schedulers.boundedElastic());
     }
