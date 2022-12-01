@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -64,8 +65,12 @@ public class RentService {
         if(save.getPaymentId()==null)
             throw new RuntimeException("Payment Failed!");
         log.info("Payment ID: "+save.getPaymentId());
-        final var deliverRentedFilms = deliveryClient.deliverRentedFilms(rentalIds);
-        log.info("Delivery Service response: "+deliverRentedFilms);
+        final var deliverRentedFilms = deliveryClient.deliverRentedFilmsReactive(Flux.fromIterable(rentalIds));
+//        Don't do this. you will get an error because of the explicit call to block()
+//        log.info("Delivery Service response: "+deliverRentedFilms.block());
+//        If you really want to block you can delegate it to a different thread.
+//        new Thread(()->log.info("Delivery Service response: "+deliverRentedFilms.block())).start();
+        deliverRentedFilms.subscribe(s -> log.info("Delivery Service response: "+s));
         return rentalIds;
     }
 

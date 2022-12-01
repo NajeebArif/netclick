@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Objects;
@@ -17,7 +19,6 @@ public class MockDeliveryClientImpl implements DeliveryClient {
 
     private final Logger log = LoggerFactory.getLogger(MockDeliveryClientImpl.class);
 
-    public static final String MOCK_PSTMN_IO_DELIVER_FILMS = "https://4d0c5a98-5307-44ff-beda-dde64abe14a9.mock.pstmn.io/deliverFilms";
     private final BlockingQueue<Integer> deliveryQueue = new PriorityBlockingQueue<>();
 
 
@@ -38,6 +39,11 @@ public class MockDeliveryClientImpl implements DeliveryClient {
             deliveryQueue.addAll(rentalIds);
         }
         return "RETRY";
+    }
+
+    @Override
+    public Mono<String> deliverRentedFilmsReactive(Flux<Integer> rentalIds) {
+        throw new UnsupportedOperationException();
     }
 
 }
