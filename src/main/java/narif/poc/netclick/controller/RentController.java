@@ -8,6 +8,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 
@@ -24,9 +27,12 @@ public class RentController {
     }
 
     @PostMapping
-    public List<Integer> rentMovies(@RequestBody RentMovieDto rentMovieDto){
+    public Flux<Integer> rentMovies(@RequestBody Mono<RentMovieDto> rentMovieDto){
         log.info("RentController invoked.");
-        return rentService.rentFilm(rentMovieDto);
+        return rentMovieDto
+                .flatMapMany(rentMovieDto1 -> Flux.fromIterable(rentService.rentFilm(rentMovieDto1)))
+                .log("REST CALL MADE.")
+                .subscribeOn(Schedulers.boundedElastic());
     }
 
 }
