@@ -30,7 +30,7 @@ public class RentController {
     public Flux<Integer> rentMovies(@RequestBody Mono<RentMovieDto> rentMovieDto){
         log.info("RentController invoked.");
         return rentMovieDto
-                .flatMapMany(rentMovieDto1 -> Flux.fromIterable(rentService.rentFilm(rentMovieDto1)))
+                .flatMapMany(rentService::rentFilmReactive)
                 .log("REST CALL MADE.")
                 .subscribeOn(Schedulers.boundedElastic());
     }

@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
@@ -41,6 +43,12 @@ public class RentService {
         this.staffRepository = staffRepository;
         this.paymentRepository = paymentRepository;
         this.deliveryClient = deliveryClient;
+    }
+
+    public Flux<Integer> rentFilmReactive(RentMovieDto rentMovieDtoMono){
+        return Mono.fromCallable(()->rentFilm(rentMovieDtoMono))
+                .subscribeOn(Schedulers.boundedElastic())
+                .flatMapMany(Flux::fromIterable);
     }
 
     @Transactional
