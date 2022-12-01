@@ -1,7 +1,7 @@
 logging.level:
   org.hibernate:
     SQL: DEBUG
-    type.descriptor.sql.BasicBinder: TRACE
+#    type.descriptor.sql.BasicBinder: TRACE
 spring:
   main:
     web-application-type: reactive

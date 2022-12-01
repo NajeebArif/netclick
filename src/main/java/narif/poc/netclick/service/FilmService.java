@@ -4,6 +4,8 @@ import narif.poc.netclick.model.FilmDto;
 import narif.poc.netclick.model.FilmSearchQueryDto;
 import narif.poc.netclick.model.entity.Film;
 import narif.poc.netclick.repository.FilmRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -15,6 +17,8 @@ import java.util.function.Function;
 
 @Service
 public class FilmService {
+
+    private final Logger log = LoggerFactory.getLogger(FilmService.class);
 
     private final FilmRepository filmRepository;
 
@@ -47,6 +51,7 @@ public class FilmService {
     }
 
     public List<Film> findAllByIds(List<Integer> filmIds){
+        log.info("Fetch films for the given ids: "+filmIds);
         return filmRepository.findAllById(filmIds);
     }
 
