@@ -7,6 +7,7 @@ import narif.poc.netclick.repository.CustomerRepository;
 import narif.poc.netclick.repository.PaymentRepository;
 import narif.poc.netclick.repository.RentalRepository;
 import narif.poc.netclick.repository.StaffRepository;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -46,20 +47,18 @@ public class RentService {
     }
 
     public Flux<Integer> rentFilm(RentMovieDto rentMovieDto) {
-        final var filmList = Mono.fromCallable(()->filmService.findAllByIds(rentMovieDto.getFilmIds()))
+        final var filmFlux = Mono.fromCallable(()->filmService.findAllByIds(rentMovieDto.getFilmIds()))
                 .flatMapMany(Flux::fromIterable)
                 .subscribeOn(Schedulers.boundedElastic());
-        final var totalCost = calculateTotalCostOfRent(rentMovieDto, filmList);
-        final var customer = Mono.fromCallable(()->customerRepository.findByEmail(rentMovieDto.getCustomerEmail()).orElseThrow(RuntimeException::new));
-        final var staff = Mono.fromCallable(()->staffRepository.findById(1).orElseThrow(RuntimeException::new));
-        final var payment = getPaymentMono(totalCost, customer, staff)
+        final var totalCostMono = calculateTotalCostOfRent(rentMovieDto, filmFlux);
+        final var customerMono = Mono.fromCallable(()-> getCustomer(rentMovieDto));
+        final var staffMono = Mono.fromCallable(this::getStaff);
+        final var paymentMono = getPaymentMono(totalCostMono, customerMono, staffMono)
                 .subscribeOn(Schedulers.boundedElastic());
-        final var rentals = filmList
-                .flatMap(f->Mono.zip(customer, payment, staff)
-                                .map(tup3->filmToRental(f, rentMovieDto, tup3.getT1(), tup3.getT2(), tup3.getT3()))
-                        )
+        final var rentalFlux = filmFlux
+                .flatMap(filmToRentals(rentMovieDto, customerMono, staffMono, paymentMono))
                 .subscribeOn(Schedulers.boundedElastic());
-        return Flux.zip(rentals.collectList(), payment)
+        return Flux.zip(rentalFlux.collectList(), paymentMono)
                 .flatMapIterable(tuple-> processRentals(tuple.getT1(), tuple.getT2()));
     }
 
@@ -67,17 +66,44 @@ public class RentService {
         for (Rental ren : rentals) {
             payment.setRental(ren);
         }
+        final List<Integer> rentalIds = saveRentalsToDb(rentals);
+        savePaymentToDb(payment);
+        sendRentalIdsToDeliveryClient(rentalIds);
+        return rentalIds;
+    }
+
+    private void sendRentalIdsToDeliveryClient(List<Integer> rentalIds) {
+        final var deliverRentedFilms = deliveryClient.deliverRentedFilmsReactive(Flux.fromIterable(rentalIds));
+        deliverRentedFilms.subscribe(s -> log.info("Delivery Service response: "+s));
+    }
+
+    private void savePaymentToDb(Payment payment) {
+        final var save = paymentRepository.save(payment);
+        if(save.getPaymentId()==null) {
+            throw new RuntimeException("Payment Failed!");
+        }
+        log.info("Payment ID: "+save.getPaymentId());
+    }
+
+    private List<Integer> saveRentalsToDb(List<Rental> rentals) {
         final var rentalIds = rentalRepository.saveAll(rentals)
                 .stream().map(Rental::getRentalId)
                 .collect(Collectors.toList());
         log.info("Rental ids created: "+rentalIds);
-        final var deliverRentedFilms = deliveryClient.deliverRentedFilmsReactive(Flux.fromIterable(rentalIds));
-        deliverRentedFilms.subscribe(s -> log.info("Delivery Service response: "+s));
-        final var save = paymentRepository.save(payment);
-        if(save.getPaymentId()==null)
-            throw new RuntimeException("Payment Failed!");
-        log.info("Payment ID: "+save.getPaymentId());
         return rentalIds;
+    }
+
+    private Staff getStaff() {
+        return staffRepository.findById(1).orElseThrow(RuntimeException::new);
+    }
+
+    private Customer getCustomer(RentMovieDto rentMovieDto) {
+        return customerRepository.findByEmail(rentMovieDto.getCustomerEmail()).orElseThrow(RuntimeException::new);
+    }
+
+    private static Function<Film, Publisher<? extends Rental>> filmToRentals(RentMovieDto rentMovieDto, Mono<Customer> customerMono, Mono<Staff> staffMono, Mono<Payment> paymentMono) {
+        return f -> Mono.zip(customerMono, paymentMono, staffMono)
+                .map(tup3 -> filmToRental(f, rentMovieDto, tup3.getT1(), tup3.getT2(), tup3.getT3()));
     }
 
     private static Mono<BigDecimal> calculateTotalCostOfRent(RentMovieDto rentMovieDto, Flux<Film> filmList) {
@@ -96,20 +122,6 @@ public class RentService {
         payment.setAmount(totalCost);
         payment.setStaff(byId);
         return payment;
-    }
-
-    private static Function<Film, Rental> getFilmRentalFunction(RentMovieDto rentMovieDto, Customer byEmail, Payment payment, Staff byId) {
-        return film -> {
-            final var rental = new Rental();
-            rental.addPayment(payment);
-            rental.setInventory(film.getInventories().get(0));
-            rental.setCustomer(byEmail);
-            rental.setRentalDate(currentTimestamp());
-            rental.setLastUpdate(currentTimestamp());
-            rental.setReturnDate(new Timestamp(Instant.now().plus(rentMovieDto.getNumberOfDays(), ChronoUnit.DAYS).toEpochMilli()));
-            rental.setStaff(byId);
-            return rental;
-        };
     }
 
     private static Rental filmToRental(Film film, RentMovieDto rentMovieDto, Customer byEmail, Payment payment, Staff byId) {
