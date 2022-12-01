@@ -63,7 +63,7 @@ public class Film implements Serializable {
 	private List<FilmCategory> filmCategories;
 
 	//bi-directional many-to-one association to Inventory
-	@OneToMany(mappedBy="film", fetch = FetchType.LAZY)
+	@OneToMany(mappedBy="film", fetch = FetchType.EAGER)
 	private List<Inventory> inventories;
 
 	public Film() {
