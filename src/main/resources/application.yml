@@ -3,6 +3,10 @@
 #    SQL: DEBUG
 #    type.descriptor.sql.BasicBinder: TRACE
 spring:
+#  r2dbc:
+#    url: "r2dbc:postgresql://localhost:5432/dvdrental"
+#    username: narif
+#    password: password
   main:
     web-application-type: reactive
   jpa:

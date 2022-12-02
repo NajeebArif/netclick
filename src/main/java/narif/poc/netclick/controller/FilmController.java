@@ -2,11 +2,14 @@ package narif.poc.netclick.controller;
 
 import narif.poc.netclick.model.FilmDto;
 import narif.poc.netclick.model.FilmSearchQueryDto;
+import narif.poc.netclick.model.records.FilmRecord;
+import narif.poc.netclick.repository.reactive.ReactiveFilmRepository;
 import narif.poc.netclick.service.FilmService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,9 +20,16 @@ import java.util.stream.Collectors;
 public class FilmController {
 
     private final FilmService filmService;
+    private final ReactiveFilmRepository reactiveFilmRepository;
 
-    public FilmController(FilmService filmService) {
+    public FilmController(FilmService filmService, ReactiveFilmRepository reactiveFilmRepository) {
         this.filmService = filmService;
+        this.reactiveFilmRepository = reactiveFilmRepository;
+    }
+
+    @GetMapping("reactive")
+    public Flux<FilmRecord> fetchFilms(){
+        return reactiveFilmRepository.findAllById(List.of(1,2,3));
     }
 
     @GetMapping
