@@ -3,21 +3,20 @@ package narif.poc.netclick.model.records;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Table("customer")
-public record CustomerRecord(
+@Table("staff")
+public record StaffRecord(
         @Id
-        Integer customerId,
-        Integer storeId,
+        Integer staffId,
         String firstName,
         String lastName,
-        String email,
         Integer addressId,
-        Boolean activebool,
-        LocalDate createDate,
-        LocalDateTime lastUpdate,
-        Integer active
+        String email,
+        Integer storeId,
+        Boolean active,
+        String username,
+        String password,
+        LocalDateTime lastUpdate
 ) {
 }
