@@ -1,6 +1,7 @@
 package narif.poc.netclick.controller;
 
 import narif.poc.netclick.model.RentMovieDto;
+import narif.poc.netclick.service.ReactiveRentService;
 import narif.poc.netclick.service.RentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +13,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
-import java.util.List;
-
 @RestController
 @RequestMapping("rent")
 public class RentController {
@@ -22,9 +20,11 @@ public class RentController {
     private final Logger log = LoggerFactory.getLogger(RentController.class);
 
     private final RentService rentService;
+    private final ReactiveRentService reactiveRentService;
 
-    public RentController(RentService rentService) {
+    public RentController(RentService rentService, ReactiveRentService reactiveRentService) {
         this.rentService = rentService;
+        this.reactiveRentService = reactiveRentService;
     }
 
     @PostMapping
@@ -35,5 +35,16 @@ public class RentController {
                 .log("REST CALL MADE.")
                 .subscribeOn(Schedulers.boundedElastic());
     }
+
+    @PostMapping("reactive")
+    public Flux<Integer> rentMoviesReactive(@RequestBody Mono<RentMovieDto> rentMovieDto){
+        log.info("RentController invoked.");
+        return rentMovieDto
+                .flatMapMany(reactiveRentService::rentFilm)
+                .log("REST CALL MADE.")
+                .subscribeOn(Schedulers.boundedElastic());
+    }
+
+
 
 }
