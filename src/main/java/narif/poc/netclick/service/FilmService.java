@@ -3,7 +3,7 @@ package narif.poc.netclick.service;
 import narif.poc.netclick.model.FilmDto;
 import narif.poc.netclick.model.FilmSearchQueryDto;
 import narif.poc.netclick.model.entity.Film;
-import narif.poc.netclick.repository.FilmRepository;
+import narif.poc.netclick.repository.jpa.FilmRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;

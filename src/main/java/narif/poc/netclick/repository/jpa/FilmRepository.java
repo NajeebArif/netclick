@@ -1,4 +1,4 @@
-package narif.poc.netclick.repository;
+package narif.poc.netclick.repository.jpa;
 
 import narif.poc.netclick.model.entity.Film;
 import org.springframework.data.domain.Page;
