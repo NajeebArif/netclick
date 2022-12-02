@@ -1,13 +1,10 @@
 package narif.poc.netclick.repository.reactive;
 
-import narif.poc.netclick.model.records.FilmRecord;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class ReactiveFilmRepositoryTest {
@@ -16,7 +13,8 @@ class ReactiveFilmRepositoryTest {
     private ReactiveFilmRepository reactiveFilmRepository;
 
     @Test
-    void testFindAll(){
+    @DisplayName("given an id of 1, should return the film with title")
+    void testFindById(){
         final var byId = reactiveFilmRepository.findById(1);
         StepVerifier.create(byId)
                 .expectNextMatches(filmRecord -> filmRecord.title().equalsIgnoreCase("Academy Dinosaur"))
